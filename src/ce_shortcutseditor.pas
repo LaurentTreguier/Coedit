@@ -69,6 +69,7 @@ type
     procedure shortcutCatcherExit(Sender: TObject);
     procedure shortcutCatcherMouseLeave(Sender: TObject);
     procedure propeditModified(Sender: TObject);
+    procedure propeditModified2(Sender: TObject; value: shortstring);
     procedure treeSelectionChanged(Sender: TObject);
   private
     fObservers: TCEEditableShortCutSubject;
@@ -189,7 +190,7 @@ begin
   AssignPng(btnEdit, 'KEYBOARD_PENCIL');
   EntitiesConnector.addObserver(self);
   propedit.TIObject := propvalue;
-  propedit.PropertyEditorHook.AddHandlerModified(@propeditModified);
+  propedit.PropertyEditorHook.AddHandlerModified(@propeditModified2);
 end;
 
 destructor TCEShortcutEditor.destroy;
@@ -263,6 +264,11 @@ end;
 procedure TCEShortcutEditor.shortcutCatcherMouseLeave(Sender: TObject);
 begin
   updateEditCtrls;
+end;
+
+procedure TCEShortcutEditor.propeditModified2(Sender: TObject; value: shortstring);
+begin
+  propeditModified(sender);
 end;
 
 procedure TCEShortcutEditor.propeditModified(Sender: TObject);

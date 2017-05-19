@@ -393,6 +393,8 @@ type
     fAppliOpts: TCEApplicationOptions;
     fProjActionsLock: boolean;
     fCompilerSelector: ICECompilerSelector;
+    procedure dockMasterCreateControl(Sender: TObject; aName: string;
+      var AControl: TControl; DoDisableAutoSizing: boolean);
     procedure updateFloatingWidgetOnTop(onTop: boolean);
     procedure widgetDockingChanged(sender: TCEWidget; newState: TWidgetDockingState);
     procedure mnuOptsItemClick(sender: TObject);
@@ -1304,6 +1306,28 @@ begin
   fGdbWidg    := TCEGdbWidget.create(self);
   {$ENDIF}
 
+
+  fMesgWidg   .DisableAutoSizing;
+  fEditWidg   .DisableAutoSizing;
+  fProjWidg   .DisableAutoSizing;
+  fPrjCfWidg  .DisableAutoSizing;
+  fFindWidg   .DisableAutoSizing;
+  fExplWidg   .DisableAutoSizing;
+  fLibMWidg   .DisableAutoSizing;
+  fTlsEdWidg  .DisableAutoSizing;
+  fPrInpWidg  .DisableAutoSizing;
+  fTodolWidg  .DisableAutoSizing;
+  fOptEdWidg  .DisableAutoSizing;
+  fSymlWidg   .DisableAutoSizing;
+  fInfoWidg   .DisableAutoSizing;
+  fDubProjWidg.DisableAutoSizing;
+  fDfmtWidg   .DisableAutoSizing;
+  fPrjGrpWidg .DisableAutoSizing;
+  fProfWidg   .DisableAutoSizing;
+  {$IFDEF UNIX}
+  fGdbWidg.DisableAutoSizing;
+  {$ENDIF}
+
   getMessageDisplay(fMsgs);
 
   fWidgList.addWidget(@fMesgWidg);
@@ -1377,28 +1401,47 @@ var
 begin
   if csDestroying in ComponentState then
     exit;
-  for i := 0 to fWidgList.Count-1 do
-  begin
-    widg := fWidgList.widget[i];
-    if not widg.isDockable then
-      continue;
-    for anchl in [low(anchl) .. high(anchl)] do
-      if GetDockSplitterOrParent(DockMaster.GetSite(widg), anchl, site) then
-      begin
-        if site is TAnchorDockHostSite then
-        begin
-          if TAnchorDockHostSite(site).BoundSplitter.isNotNil then
-            TAnchorDockSplitterEx(TAnchorDockHostSite(site).BoundSplitter).OnMouseWheel:=@DockSplitterMw;
-        end
-        else if site is TAnchorDockSplitter then
-          TAnchorDockSplitterEx(TAnchorDockSplitter(site)).OnMouseWheel:=@DockSplitterMw;
-      end;
-  end;
+  //for i := 0 to fWidgList.Count-1 do
+  //begin
+  //  widg := fWidgList.widget[i];
+  //  if not widg.isDockable then
+  //    continue;
+  //  for anchl in [low(anchl) .. high(anchl)] do
+  //    if GetDockSplitterOrParent(DockMaster.GetSite(widg), anchl, site) then
+  //    begin
+  //      if site is TAnchorDockHostSite then
+  //      begin
+  //        if TAnchorDockHostSite(site).BoundSplitter.isNotNil then
+  //          TAnchorDockSplitterEx(TAnchorDockHostSite(site).BoundSplitter).OnMouseWheel:=@DockSplitterMw;
+  //      end
+  //      else if site is TAnchorDockSplitter then
+  //        TAnchorDockSplitterEx(TAnchorDockSplitter(site)).OnMouseWheel:=@DockSplitterMw;
+  //    end;
+  //end;
 end;
 
 procedure TCEMainForm.widgetDockingChanged(sender: TCEWidget; newState: TWidgetDockingState);
 begin
   setSplitterWheelEvent;
+end;
+
+procedure TCEMainForm.dockMasterCreateControl(Sender: TObject; aName: string;
+  var AControl: TControl; DoDisableAutoSizing: boolean);
+var
+  widg: TCEWidget;
+begin
+  for widg in fWidgList do
+    if widg.name = aName then
+  begin
+    AControl := widg;
+    DockMaster.MakeDockable(widg, true);
+    DockMaster.GetAnchorSite(widg).Header.HeaderPosition := adlhpTop;
+    widg.onDockingChanged:= @widgetDockingChanged;
+    if not DoDisableAutoSizing then
+      widg.EnableAutoSizing;
+    setSplitterWheelEvent;
+    break;
+  end;
 end;
 
 procedure TCEMainForm.InitDocking;
@@ -1413,6 +1456,7 @@ begin
   DockMaster.OnShowOptions := @ShowAnchorDockOptions;
   DockMaster.HeaderStyle := adhsPoints;
   DockMaster.HideHeaderCaptionFloatingControl := true;
+  DockMaster.OnCreateControl:=@dockMasterCreateControl;
 
   // this is a fix (?) copied from Laz.
   if DockManager is TAnchorDockManager then
@@ -1422,17 +1466,18 @@ begin
   end;
 
   // makes widget dockable
-  for i := 0 to fWidgList.Count-1 do
+  //for i := 0 to fWidgList.Count-1 do
   begin
-    widg := fWidgList.widget[i];
-    if not widg.isDockable then continue;
-    DockMaster.MakeDockable(widg, true);
-    DockMaster.GetAnchorSite(widg).Header.HeaderPosition := adlhpTop;
-    widg.onDockingChanged:= @widgetDockingChanged;
+    //widg := fWidgList.widget[i];
+    //if not widg.isDockable then continue;
+    //DockMaster.MakeDockable(widg, true);
+    //DockMaster.GetAnchorSite(widg).Header.HeaderPosition := adlhpTop;
+    //widg.onDockingChanged:= @widgetDockingChanged;
   end;
 
   // load existing or default docking
-  if FileExists(getCoeditDocPath + 'docking.xml') and LoadDocking() then
+  if FileExists(getCoeditDocPath + 'docking.xml') and
+    LoadDocking() then
   begin end
   else
   begin
@@ -1565,6 +1610,7 @@ end;
 procedure TCEMainForm.SaveDocking;
 var
   xcfg: TXMLConfigStorage;
+  s: TAnchorDockHostSite;
   i: integer;
 begin
   if not fInitialized or not Visible then
@@ -1575,10 +1621,12 @@ begin
   // does not save minimized/undocked windows to prevent bugs
   for i:= 0 to fWidgList.Count-1 do
   begin
-    if not fWidgList.widget[i].isDockable then continue;
-    if DockMaster.GetAnchorSite(fWidgList.widget[i]).WindowState = wsMinimized then
-      DockMaster.GetAnchorSite(fWidgList.widget[i]).Close
-    else if not DockMaster.GetAnchorSite(fWidgList.widget[i]).HasParent then
+    if not fWidgList.widget[i].isDockable then
+      continue;
+    s := DockMaster.GetAnchorSite(fWidgList.widget[i]);
+    if s.isNil then
+      continue;
+    if (s.WindowState = wsMinimized) or not s.HasParent then
       DockMaster.GetAnchorSite(fWidgList.widget[i]).Close;
   end;
 
@@ -1623,7 +1671,7 @@ begin
     xcfg := TXMLConfigStorage.Create(getCoeditDocPath + 'docking.xml', true);
     try
       try
-        DockMaster.LoadLayoutFromConfig(xcfg, false);
+        DockMaster.LoadLayoutFromConfig(xcfg, true);
       except
         exit;
       end;
@@ -3125,10 +3173,13 @@ begin
   widg := TCEWidget(act.Tag);
   if widg.isDockable then
   begin
-    if DockMaster.GetAnchorSite(widg).GetTopParent = DockMaster.GetAnchorSite(widg) then
-      act.Enabled := true
-    else
+    if DockMaster.GetAnchorSite(widg).isNotNil and
+      (DockMaster.GetAnchorSite(widg).GetTopParent = DockMaster.GetAnchorSite(widg)) then
+        act.Enabled := true
+    else if widg.Parent.isNotNil then
       act.Enabled := not widg.Parent.IsVisible
+    else
+      act.Enabled := false;
   end
   else act.Enabled := not widg.IsVisible;
 end;

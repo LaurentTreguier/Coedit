@@ -33,7 +33,7 @@ type
     procedure btnRunClick(Sender: TObject);
     procedure lstToolsDblClick(Sender: TObject);
     procedure lstToolsSelectionChange(Sender: TObject; User: boolean);
-    procedure propsEdModified(Sender: TObject);
+    procedure propsEdModified(Sender: TObject; value: shortstring);
   private
     procedure setReadOnly(value: boolean);
     procedure executeSelectedTool;
@@ -93,7 +93,7 @@ begin
   propsEd.TIObject := CustomTools[lstTools.ItemIndex];
 end;
 
-procedure TCEToolsEditorWidget.propsEdModified(Sender: TObject);
+procedure TCEToolsEditorWidget.propsEdModified(Sender: TObject; value: shortstring);
 begin
   if propsEd.ItemIndex = -1 then
     exit;

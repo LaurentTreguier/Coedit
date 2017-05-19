@@ -37,6 +37,7 @@ type
     procedure inspectorEditorFilter(Sender: TObject; aEditor: TPropertyEditor;
       var aShow: boolean);
     procedure inspectorModified(Sender: TObject);
+    procedure inspectorModified2(Sender: TObject; value: shortstring);
     procedure selCatChanging(Sender: TObject; Node: TTreeNode;
       var AllowChange: Boolean);
     procedure selCatDeletion(Sender: TObject; Node: TTreeNode);
@@ -72,7 +73,7 @@ begin
   fIsModal:= true;
   fEdOptsSubj := TCEEditableOptionsSubject.create;
   inspector.CheckboxForBoolean := true;
-  inspector.PropertyEditorHook.AddHandlerModified(@inspectorModified);
+  inspector.PropertyEditorHook.AddHandlerModified(@inspectorModified2);
   //
   AssignPng(btnCancel, 'CANCEL');
   AssignPng(btnAccept, 'ACCEPT');
@@ -242,6 +243,11 @@ begin
   PCategoryData(selCat.Selected.Data)^
     .observer
     .optionedEvent(oeeSelectCat);
+end;
+
+procedure TCEOptionEditorWidget.inspectorModified2(Sender: TObject; value: shortstring);
+begin
+  inspectorModified(sender);
 end;
 
 procedure TCEOptionEditorWidget.inspectorModified(Sender: TObject);

@@ -97,6 +97,7 @@ type
     procedure btnDelClick(sender: TObject);
     procedure btnCloneClick(sender: TObject);
     procedure propEdModified(sender: TObject);
+    procedure propEdModified2(sender: TObject; value: shortstring);
     procedure updateList;
     procedure updateEditor;
   public
@@ -559,7 +560,7 @@ begin
   fPropEd.DefaultValueFont.Color := clGreen;
   fPropEd.OnModified:=@propEdModified;
   fPropEd.CheckboxForBoolean:=true;
-  fPropEd.PropertyEditorHook.AddHandlerModified(@propEdModified);
+  fPropEd.PropertyEditorHook.AddHandlerModified(@propEdModified2);
   //
   fList.ItemIndex := 0;
   lstBoxSelChange(nil);
@@ -648,6 +649,11 @@ begin
   btnAddClick(nil);
   fPresets[fList.ItemIndex].Assign(old);
   updateEditor;
+end;
+
+procedure TCED2SynPresetsLoaderForm.propEdModified2(sender: TObject; value: shortstring);
+begin
+  propEdModified(sender);
 end;
 
 procedure TCED2SynPresetsLoaderForm.propEdModified(sender: TObject);

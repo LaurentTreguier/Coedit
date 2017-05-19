@@ -30,6 +30,7 @@ type
     procedure btnCloneCurrClick(Sender: TObject);
     procedure btnSyncEditClick(Sender: TObject);
     procedure inspectorModified(Sender: TObject);
+    procedure inspectorModified2(Sender: TObject; PropName: ShortString);
     procedure selConfChange(Sender: TObject);
     procedure TreeChange(Sender: TObject; Node: TTreeNode);
     procedure GridFilter(Sender: TObject; aEditor: TPropertyEditor;var aShow: boolean);
@@ -71,7 +72,7 @@ begin
   Tree.Selected := Tree.Items.GetLastNode;
   inspector.OnEditorFilter := @GridFilter;
   inspector.CheckboxForBoolean := true;
-  inspector.PropertyEditorHook.AddHandlerModified(@inspectorModified);
+  inspector.PropertyEditorHook.AddHandlerModified(@inspectorModified2);
   //
   EntitiesConnector.addObserver(self);
 end;
@@ -190,6 +191,11 @@ procedure TCEProjectConfigurationWidget.syncroGetPropAsString(const section, Ite
 begin
   fSynchroItem.Add(Item);
   fSynchroValue.Add(value);
+end;
+
+procedure TCEProjectConfigurationWidget.inspectorModified2(Sender: TObject; PropName: ShortString);
+begin
+  inspectorModified(sender);
 end;
 
 procedure TCEProjectConfigurationWidget.inspectorModified(Sender: TObject);
